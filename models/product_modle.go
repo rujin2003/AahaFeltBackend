@@ -1,4 +1,4 @@
-package modle
+package model
 
 type Product struct {
 	ID            string   `json:"id"`
@@ -28,4 +28,36 @@ type Product struct {
 	Images        []string `json:"images"`
 	Exclusive     bool     `json:"exclusive"`
 	NewInMarket   bool     `json:"new_in_market"`
+}
+
+func NewProduct(id string, weight string, price string, mostPopular bool, bestseller bool, material string, stock int, newArrival bool, designer string, company string, hotCollection bool, colors []string, category string, description string, reviews int, stars float64, name string, notes string, featured bool, sale bool, trending bool, shipping string, origin string, image string, images []string, exclusive bool, newInMarket bool) *Product {
+	return &Product{
+		ID:            id,
+		Weight:        weight,
+		Price:         price,
+		MostPopular:   mostPopular,
+		Bestseller:    bestseller,
+		Material:      material,
+		Stock:         stock,
+		NewArrival:    newArrival,
+		Designer:      designer,
+		Company:       company,
+		HotCollection: hotCollection,
+		Colors:        colors,
+		Category:      category,
+		Description:   description,
+		Reviews:       reviews,
+		Stars:         stars,
+		Name:          name,
+		Notes:         notes,
+		Featured:      featured,
+		Sale:          sale,
+		Trending:      trending,
+		Shipping:      shipping,
+		Origin:        origin,
+		Image:         image,
+		Images:        images,
+		Exclusive:     exclusive,
+		NewInMarket:   newInMarket,
+	}
 }
