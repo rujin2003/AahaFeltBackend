@@ -14,10 +14,21 @@ type Storage interface {
 	GetProductsById(id int) (*model.Product, error)
 	UpdateProductById(id int, product model.Product) error
 	DeleteProductById(id int) error
-	AddImage(r *http.Request) (int, error)
+
 	// gallery
-	GetImageURL(id int) (string, error)
+	AddImage(r *http.Request) (int, error)
 	GetImageByID(id int) (*model.GalleryImage, error)
+	GetAllImageIDs() ([]int, error)
+	DeleteImageByID(id int) error
+
+	// product image
+	AddProductImages(r *http.Request) ([]int, error)
+
+	// GetImagesByProductName(productName string) ([]model.ProductImage, error)
+	GetImagesByProductName(string) ([]model.ProductImage, error)
+	DeleteProductImageByName(productName string) error
+
+	GetProductImageByID(id int) (*model.GalleryImage, error)
 
 	Close()
 	Init() error

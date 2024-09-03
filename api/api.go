@@ -2,6 +2,7 @@ package api
 
 import (
 	"AahaFeltBackend/storage"
+	"fmt"
 
 	"net/http"
 
@@ -21,32 +22,31 @@ func NewApiServer(address string, store storage.Storage) *ApiServer {
 }
 
 func (s *ApiServer) Start() {
-
+	//MARK: Products
 	router := mux.NewRouter()
-	router.Use(s.corsMiddleware)
 	router.HandleFunc("/products", makeHandler(s.handleGetProducts)).Methods("GET")
 	router.HandleFunc("/products", makeHandler(s.handlePostProducts)).Methods("POST")
 	router.HandleFunc("/products/{id}", makeHandler(s.handleGetProductsById)).Methods("GET")
 	router.HandleFunc("/products/{id}", makeHandler(s.UpdateProductHandler)).Methods("POST")
 	router.HandleFunc("/products/{id}", makeHandler(s.handleDeleteProduct)).Methods("DELETE")
-	router.HandleFunc("/images", makeHandler(s.addImageHandler)).Methods("GET")
-	router.HandleFunc("/images", makeHandler(s.getImageHandler)).Methods("POST")
+
+	// MARK: Gallery
+	router.HandleFunc("/gallery-images", makeHandler(s.addImageHandler)).Methods("POST")
+	router.HandleFunc("/gallery-images/{id}", makeHandler(s.getImageHandler)).Methods("GET")
+	router.HandleFunc("/gallery-images", makeHandler(s.getAllImageLinksHandler)).Methods("GET")
+	router.HandleFunc("/gallery-images/{id}", makeHandler(s.deleteImageHandler)).Methods("DELETE")
+
+	// MARK: Product Images
+	router.HandleFunc("/productimage", makeHandler(s.AddProductImagesHandler)).Methods("POST")
+	router.HandleFunc("/productimage/{product_name}", makeHandler(s.GetProductImagesByNameHandler)).Methods("GET")
+
+	router.HandleFunc("/productimg/{id}", makeHandler(s.getImageHandler)).Methods("GET")
+	router.HandleFunc("/productimage/{product_name}", makeHandler(s.DeleteProductImagesByNameHandler)).Methods("DELETE")
+
+	fmt.Printf("Server is starting on %s...\n", s.address)
+	if err := http.ListenAndServe(s.address, router); err != nil {
+		fmt.Printf("Error starting server: %v\n", err)
+	}
 
 	http.ListenAndServe(s.address, router)
-}
-
-func (s *ApiServer) corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		// Handle preflight requests
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
 }

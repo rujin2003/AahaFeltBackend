@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -10,21 +11,17 @@ import (
 )
 
 func (s *ApiServer) addImageHandler(w http.ResponseWriter, r *http.Request) error {
+
 	id, err := s.store.AddImage(r)
 	if err != nil {
-		http.Error(w, "Failed to add image", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to add image: %v", err), http.StatusInternalServerError)
 		return nil
 	}
 
-	url, err := s.store.GetImageURL(id)
-	if err != nil {
-		http.Error(w, "Failed to generate image URL", http.StatusInternalServerError)
-		return nil
-	}
-
+	url := fmt.Sprintf("http://localhost:8080/images/%d", id)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"image_url": url})
-	return writeJSON(w, http.StatusOK, "image added successfully")
+	w.Write([]byte(fmt.Sprintf(`{"image_url": "%s"}`, url)))
+	return nil
 }
 
 func (s *ApiServer) getImageHandler(w http.ResponseWriter, r *http.Request) error {
@@ -41,7 +38,6 @@ func (s *ApiServer) getImageHandler(w http.ResponseWriter, r *http.Request) erro
 		return nil
 	}
 
-	// Decode the base64 image and serve it as an HTTP response
 	imageBytes, err := base64.StdEncoding.DecodeString(image.ImageBase64)
 	if err != nil {
 		http.Error(w, "Failed to decode image", http.StatusInternalServerError)
@@ -51,5 +47,44 @@ func (s *ApiServer) getImageHandler(w http.ResponseWriter, r *http.Request) erro
 	w.Header().Set("Content-Disposition", "inline; filename=image.jpg")
 	w.Header().Set("Content-Type", "image/jpeg")
 	w.Write(imageBytes)
-	return writeJSON(w, http.StatusOK, "image added successfully")
+	return nil
+
+}
+
+func (s *ApiServer) getAllImageLinksHandler(w http.ResponseWriter, r *http.Request) error {
+	ids, err := s.store.GetAllImageIDs()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to retrieve image links: %v", err), http.StatusInternalServerError)
+		return nil
+	}
+
+	var links []string
+	for _, id := range ids {
+		link := fmt.Sprintf("http://localhost:3000/gallery-images/%d", id)
+		links = append(links, link)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(map[string][]string{"image_links": links}); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return nil
+	}
+	return nil
+}
+func (s *ApiServer) deleteImageHandler(w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid image ID", http.StatusBadRequest)
+		return nil
+	}
+
+	err = s.store.DeleteImageByID(id)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to delete image: %v", err), http.StatusInternalServerError)
+		return nil
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+	return nil
 }
